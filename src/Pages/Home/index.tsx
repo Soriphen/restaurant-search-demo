@@ -44,6 +44,7 @@ export function Form(): JSX.Element {
     }
   }, [debouncedSearch]);
 
+  // For searching with query parameter 'term' in the URL
   React.useEffect(() => {
     if (termQuery) {
       const fetchResults = async () => {
@@ -65,9 +66,9 @@ export function Form(): JSX.Element {
   return (
     <>
       <Input
-        label="Where would you like to search?"
         type="search"
         width={Size.Large}
+        placeholder="Where would you like to search?"
         id="input"
         value={searchValue}
         onChange={(event) => setSearchValue(event.target.value)}
@@ -81,7 +82,6 @@ export function Form(): JSX.Element {
           shops={results.shops}
         />
       ) : null}
-      {/* {JSON.stringify(results)} */}
     </>
   );
 }
