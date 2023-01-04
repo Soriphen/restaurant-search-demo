@@ -6,8 +6,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { AppThemeProvider } from 'Common/Theme';
-import { Router } from 'Router';
 import { getI18nextInstance, initI18n } from 'i18n';
+import { Router } from 'router';
 import { MainWrapper } from 'styles';
 
 export function App(): JSX.Element {

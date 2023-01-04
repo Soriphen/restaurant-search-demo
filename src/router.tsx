@@ -28,6 +28,7 @@ export function Router({
         }
       >
         <Route index element={<Home />} />
+        <Route path="/:locale/shops" element={<Home />} />
       </Route>
       <Route path="*" element={<Navigate to={`/${language}`} replace />} />
     </Routes>
