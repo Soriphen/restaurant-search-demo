@@ -1,70 +1,89 @@
+import { Global, css } from '@emotion/react';
 import { Input } from '@tablecheck/tablekit-input';
+import { ItemGroup, Item } from '@tablecheck/tablekit-item';
+import { ModalDialog } from '@tablecheck/tablekit-modal-dialog';
 import { Spinner, SpinnerSize } from '@tablecheck/tablekit-spinner';
 import { Size } from '@tablecheck/tablekit-theme';
+import {
+  desktopTypographyStyles,
+  mobileTypographyStyles,
+  commonTypographyStyles
+} from '@tablecheck/tablekit-typography';
 import * as React from 'react';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 
-import { useDebounce } from 'Hooks/useDebounce';
-import { ResultsData } from 'Interfaces/results.interface';
-import { Locations } from 'Pages/Shops';
+import { useShopSearch } from 'Hooks/useShopSearch';
+import { ResultsAndSearchProps } from 'Interfaces/results.interface';
+import { Results } from 'Pages/Listing';
 
-import { HomeHeadline, HomeWrapper } from './styles';
+import { HomeWrapper, HomeHeadline, ListingImage } from './styles';
+
+function ResultsAndSearch({
+  shopSearchData
+}: ResultsAndSearchProps): JSX.Element | null {
+  if (shopSearchData) {
+    return (
+      <>
+        {shopSearchData?.shops.map((value) => (
+          <Item
+            customStyles="border: 1px solid grey; text-align: left; height: 200px"
+            key={value._id}
+            elemBefore={
+              <ListingImage
+                src={value.search_image}
+                alt={value.name[1] || value.name[0]}
+              />
+            }
+          >
+            <h4 style={{ fontWeight: 700, fontSize: 18 }}>
+              {value.name[1] || value.name[0]}
+            </h4>
+            <div style={{ display: 'flex', textTransform: 'capitalize' }}>
+              {value.cuisines.join(', ')}
+            </div>
+
+            {value.content_title_translations.map((title) => {
+              if (title.locale === 'en') {
+                return <h5 key={title.locale}>{title.translation}</h5>;
+              }
+              return null;
+            })}
+          </Item>
+        ))}
+      </>
+    );
+  }
+
+  return null;
+}
 
 export function Form(): JSX.Element {
-  const baseUrl = 'https://staging-snap.tablecheck.com/v2/autocomplete';
-  const locale = 'en';
-  const shopUniverseId = '57e0b91744aea12988000001';
-  const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const termQuery = query.get('term');
-  const [searchValue, setSearchValue] = React.useState<string>('');
-  const [results, setResults] = React.useState<ResultsData | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const debouncedSearch = useDebounce(searchValue, 500);
+  const {
+    isLoading,
+    setShopSearchData,
+    shopSearchData,
+    searchValue,
+    setSearchValue,
+    results,
+    termQuery
+  } = useShopSearch();
 
-  // Debounce search for locations
-  React.useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(
-          `${baseUrl}?locale=${locale}&shop_universe_id=${shopUniverseId}&text=${debouncedSearch}`
-        );
-        const data = await response.json();
-        setResults(data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    if (debouncedSearch) {
-      fetchResults();
-    }
-  }, [debouncedSearch]);
-
-  // For searching with query parameter 'term' in the URL
-  React.useEffect(() => {
-    if (termQuery) {
-      const fetchResults = async () => {
-        try {
-          const response = await fetch(
-            `${baseUrl}?locale=${locale}&shop_universe_id=${shopUniverseId}&text=${termQuery}`
-          );
-          const data = await response.json();
-          setResults(data);
-        } catch (error) {
-          console.error(error);
-        }
-      };
-
-      fetchResults();
-    }
-  }, [termQuery]);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   return (
     <>
+      <Global
+        styles={css`
+          ${commonTypographyStyles};
+          ${mobileTypographyStyles};
+
+          @media (min-width: 1024px) {
+            ${desktopTypographyStyles};
+          }
+        `}
+      />
       <Input
         type="search"
         width={Size.Large}
@@ -72,16 +91,51 @@ export function Form(): JSX.Element {
         id="input"
         value={searchValue}
         onChange={(event) => setSearchValue(event.target.value)}
+        onClick={() => setIsOpen(true)}
         shouldFitContainer
       />
-      {isLoading && <Spinner size={SpinnerSize.Regular} />}
-      {results ? (
-        <Locations
-          locations={results.locations}
-          cuisines={results.cuisines}
-          shops={results.shops}
+      <ModalDialog
+        hasCloseIcon
+        headerContent=""
+        footerContent=""
+        data-testid="Search Modal"
+        isOpen={isOpen}
+        onOpenChange={(changedState) => {
+          setIsOpen(changedState);
+        }}
+        width="500px"
+      >
+        <>
+          <Input
+            type="search"
+            width={Size.Large}
+            placeholder="Where would you like to search?"
+            id="input"
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            shouldFitContainer
+          />
+          {isLoading && <Spinner size={SpinnerSize.Regular} />}
+          {results ? (
+            <Results
+              locations={results.locations}
+              cuisines={results.cuisines}
+              shops={results.shops}
+              shopSearchData={shopSearchData}
+              setShopSearchData={setShopSearchData}
+              setIsOpen={setIsOpen}
+              isOpen={isOpen}
+            />
+          ) : null}
+        </>
+      </ModalDialog>
+      <ItemGroup hasIndent>
+        <ResultsAndSearch
+          shopSearchData={shopSearchData}
+          termQuery={termQuery}
+          results={results}
         />
-      ) : null}
+      </ItemGroup>
     </>
   );
 }
@@ -91,7 +145,6 @@ export function Home(): JSX.Element {
 
   return (
     <HomeWrapper>
-      {/* <HomeHeadline>{t('attributes.titles.headline')}</HomeHeadline> */}
       <HomeHeadline>
         <Form />
       </HomeHeadline>
