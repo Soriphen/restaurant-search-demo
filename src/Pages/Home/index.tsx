@@ -15,42 +15,81 @@ import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router-dom';
 
 import { useShopSearch } from 'Hooks/useShopSearch';
-import { ResultsAndSearchProps } from 'Interfaces/results.interface';
+import {
+  ResultsAndSearchProps,
+  ResultsAndSearchShopProps
+} from 'Interfaces/results.interface';
 import { Results } from 'Pages/Listing';
 
 import { HomeWrapper, HomeHeadline, ListingImage } from './styles';
 
+function ResultsAndSearchShop({
+  shop
+}: ResultsAndSearchShopProps): JSX.Element | null {
+  const [isShopOpen, setIsShopOpen] = React.useState(false);
+  const { i18n } = useTranslation();
+  return (
+    <>
+      <Item
+        customStyles="border: 1px solid grey; text-align: left; height: 200px"
+        elemBefore={
+          <ListingImage
+            src={shop.search_image}
+            alt={shop.name[1] || shop.name[0]}
+          />
+        }
+        onClick={() => {
+          setIsShopOpen(true);
+        }}
+      >
+        <h4 style={{ fontWeight: 700, fontSize: 18 }}>
+          {shop.name[1] || shop.name[0]}
+        </h4>
+        <div style={{ display: 'flex', textTransform: 'capitalize' }}>
+          {shop.cuisines.join(', ')}
+        </div>
+
+        {shop.content_title_translations.map((title) => {
+          if (title.locale === i18n.language) {
+            return <h5 key={title.locale}>{title.translation}</h5>;
+          }
+          return null;
+        })}
+      </Item>
+      <ModalDialog
+        hasCloseIcon
+        headerContent=""
+        footerContent=""
+        data-testid="Shop Modal"
+        isOpen={isShopOpen}
+        onOpenChange={(changedState) => {
+          setIsShopOpen(changedState);
+        }}
+        width={1000}
+      >
+        <h1>{shop.name[1] || shop.name[0]}</h1>
+        <>
+          {shop.content_body_translations.map((body) => {
+            if (body.locale === i18n.language) {
+              return <p key={body.translation}>{body.translation}</p>;
+            }
+            return null;
+          })}
+        </>
+      </ModalDialog>
+    </>
+  );
+}
+
+// The results that will show after a regular search or query search
 function ResultsAndSearch({
   shopSearchData
 }: ResultsAndSearchProps): JSX.Element | null {
   if (shopSearchData) {
     return (
       <>
-        {shopSearchData?.shops.map((value) => (
-          <Item
-            customStyles="border: 1px solid grey; text-align: left; height: 200px"
-            key={value._id}
-            elemBefore={
-              <ListingImage
-                src={value.search_image}
-                alt={value.name[1] || value.name[0]}
-              />
-            }
-          >
-            <h4 style={{ fontWeight: 700, fontSize: 18 }}>
-              {value.name[1] || value.name[0]}
-            </h4>
-            <div style={{ display: 'flex', textTransform: 'capitalize' }}>
-              {value.cuisines.join(', ')}
-            </div>
-
-            {value.content_title_translations.map((title) => {
-              if (title.locale === 'en') {
-                return <h5 key={title.locale}>{title.translation}</h5>;
-              }
-              return null;
-            })}
-          </Item>
+        {shopSearchData?.shops.map((shop) => (
+          <ResultsAndSearchShop key={shop._id} shop={shop} />
         ))}
       </>
     );
@@ -69,7 +108,6 @@ export function Form(): JSX.Element {
     results,
     termQuery
   } = useShopSearch();
-
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
@@ -91,7 +129,9 @@ export function Form(): JSX.Element {
         id="input"
         value={searchValue}
         onChange={(event) => setSearchValue(event.target.value)}
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+        }}
         shouldFitContainer
       />
       <ModalDialog
