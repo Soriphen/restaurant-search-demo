@@ -14,6 +14,10 @@ export interface ResultsAndSearchProps {
   results: ResultsData | null;
 }
 
+export interface ResultsAndSearchShopProps {
+  shop: ShopSearch;
+}
+
 export interface UseShopSearch {
   isLoading: boolean;
   searchValue: string;
