@@ -1,6 +1,6 @@
 # TableCheck's SPA Boilerplate
 
-DEMO: [tc-spa-boilerplate.netlify.app](https://tc-spa-boilerplate.netlify.app)
+DEMO: [Here](https://magical-sunflower-c25fad.netlify.app/)
 
 ## Getting started
 
